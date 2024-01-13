@@ -7,6 +7,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import com.example.riffrift.Retrofit.Data
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -334,13 +335,39 @@ fun TrackCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = track.artist.name,
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ){
+                    if(track.explicit_lyrics){
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = Color.Gray,
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 5.dp),
+                        ){
+                            Text(
+                                text = "E",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.size(10.dp))
+                    }
+                    Text(
+                        text = track.artist.name,
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
             }
         }
     }
