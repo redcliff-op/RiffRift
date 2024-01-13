@@ -17,20 +17,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -62,6 +70,7 @@ import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
 import com.example.riffrift.ViewModels.BottomNavBarViewModel
+import com.example.riffrift.ViewModels.PlayScreenViewModel
 import com.example.riffrift.ViewModels.SettingsViewModel
 import com.example.riffrift.ViewModels.StreamScreenViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
@@ -111,7 +120,8 @@ fun BottomNavBar(
     retrofitViewModel: RetrofitViewModel,
     bottomNavBarViewModel: BottomNavBarViewModel = BottomNavBarViewModel(),
     streamScreenViewModel: StreamScreenViewModel = StreamScreenViewModel(),
-    settingsViewModel: SettingsViewModel
+    settingsViewModel: SettingsViewModel,
+    playScreenViewModel: PlayScreenViewModel = PlayScreenViewModel()
 ){
     val bottomNavBarList = bottomNavBarViewModel.initialiseBottomNavBar()
     val navController = rememberNavController()
@@ -150,7 +160,9 @@ fun BottomNavBar(
             composable(route = "Stream"){
                 StreamScreen(
                     retrofitViewModel = retrofitViewModel,
-                    streamScreenViewModel = streamScreenViewModel
+                    streamScreenViewModel = streamScreenViewModel,
+                    navController = navController,
+                    playScreenViewModel = playScreenViewModel
                 )
             }
             composable(route = "Local"){
@@ -161,6 +173,17 @@ fun BottomNavBar(
                     settingsViewModel = settingsViewModel,
                 )
             }
+            composable(route = "Play"){
+                PlayScreen(
+                    playScreenViewModel = playScreenViewModel,
+                    navController = navController
+                )
+            }
+            composable(route = "Details"){
+                TrackDetails(
+
+                )
+            }
         }
     }
 }
@@ -168,7 +191,9 @@ fun BottomNavBar(
 @Composable
 fun StreamScreen(
     retrofitViewModel: RetrofitViewModel,
-    streamScreenViewModel: StreamScreenViewModel
+    streamScreenViewModel: StreamScreenViewModel,
+    navController : NavController,
+    playScreenViewModel: PlayScreenViewModel
 ) {
     LaunchedEffect(retrofitViewModel.query) {
         if (retrofitViewModel.query.isNotEmpty()) {
@@ -216,7 +241,9 @@ fun StreamScreen(
                 items(trackData.data) { track ->
                     TrackCard(
                         track = track,
-                        streamScreenViewModel = streamScreenViewModel
+                        streamScreenViewModel = streamScreenViewModel,
+                        navController = navController,
+                        playScreenViewModel = playScreenViewModel
                     )
                 }
             }
@@ -285,11 +312,20 @@ fun Settings(
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun TrackDetails(
+
+){
+    Text(text = "To be Implemented")
+}
+
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TrackCard(
     track: Data,
-    streamScreenViewModel: StreamScreenViewModel
+    streamScreenViewModel: StreamScreenViewModel,
+    navController: NavController,
+    playScreenViewModel: PlayScreenViewModel
 ){
     Card(
         modifier = Modifier
@@ -297,7 +333,11 @@ fun TrackCard(
             .padding(5.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent,
-        )
+        ),
+        onClick = {
+            playScreenViewModel.track = track
+            navController.navigate("Play")
+        }
     ) {
         Row (
             modifier = Modifier
@@ -369,6 +409,117 @@ fun TrackCard(
                 }
 
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun PlayScreen(
+    playScreenViewModel: PlayScreenViewModel,
+    navController: NavController
+){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(bottom = 85.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceAround
+    ) {
+        Row (
+            modifier = Modifier.fillMaxWidth(0.9f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            IconButton(
+                onClick = {
+                    navController.navigate("Stream")
+                },
+                modifier = Modifier.size(40.dp)
+            ){
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+            Text(
+                text = "Now Playing",
+                fontSize = 30.sp,
+                color = Color.White,
+            )
+            IconButton(
+                onClick = {
+                    navController.navigate("Details")
+                },
+                modifier = Modifier.size(40.dp)
+            ){
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
+        Row (
+            modifier = Modifier.fillMaxWidth(0.9f),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            GlideImage(
+                model = playScreenViewModel.track?.album?.cover_big,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(370.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+            )
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = playScreenViewModel.track?.title ?:"",
+                fontSize = 30.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = playScreenViewModel.track?.artist?.name ?:"",
+                fontSize = 25.sp,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        LinearProgressIndicator(
+            progress = 0.5f,
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .height(8.dp)
+                .clip(CircleShape),
+            color = Color.White
+        )
+        IconButton(
+            onClick = {
+                playScreenViewModel.playButton = !playScreenViewModel.playButton
+            },
+            modifier = Modifier.size(100.dp)
+        ) {
+            Icon(
+                painter = if (playScreenViewModel.playButton) painterResource(id = R.drawable.playbutton) else painterResource(id = R.drawable.pausebutton),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .size(70.dp)
+            )
         }
     }
 }
