@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -178,7 +179,7 @@ fun BottomNavBar(
             }
             composable(route = "Details"){
                 TrackDetails(
-
+                    taskViewModel = taskViewModel
                 )
             }
         }
@@ -317,11 +318,76 @@ fun Settings(
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun TrackDetails(
-
+    taskViewModel: TaskViewModel
 ){
-    Text(text = "To be Implemented")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(bottom = 85.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Row (
+            modifier = Modifier.fillMaxWidth(0.9f),
+            horizontalArrangement = Arrangement.Center
+        ){
+            Text(
+                text = "Track Details",
+                fontWeight = FontWeight.Bold,
+                fontSize = 35.sp,
+                color = Color.White
+            )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(1f),
+        ){
+            GlideImage(
+                model = taskViewModel.track?.artist?.picture_xl,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(10.dp))
+            )
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            horizontalAlignment = Alignment.Start,
+        ){
+            Text(
+                text = "Artist : ${taskViewModel.track?.artist?.name}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 25.sp,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Text(
+                text = "Album : ${taskViewModel.track?.album?.title}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 25.sp,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Text(
+                text = "Explicit : ${taskViewModel.track?.explicit_lyrics}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 25.sp,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
