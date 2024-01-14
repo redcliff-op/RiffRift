@@ -71,10 +71,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
-import com.example.riffrift.ViewModels.BottomNavBarViewModel
-import com.example.riffrift.ViewModels.PlayScreenViewModel
+import com.example.riffrift.ViewModels.MediaPlayerViewModel
 import com.example.riffrift.ViewModels.SettingsViewModel
-import com.example.riffrift.ViewModels.StreamScreenViewModel
+import com.example.riffrift.ViewModels.TaskViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
 
 class MainActivity : ComponentActivity() {
@@ -120,12 +119,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BottomNavBar(
     retrofitViewModel: RetrofitViewModel,
-    bottomNavBarViewModel: BottomNavBarViewModel = BottomNavBarViewModel(),
-    streamScreenViewModel: StreamScreenViewModel = StreamScreenViewModel(),
     settingsViewModel: SettingsViewModel,
-    playScreenViewModel: PlayScreenViewModel = PlayScreenViewModel()
+    taskViewModel: TaskViewModel = TaskViewModel(),
 ){
-    val bottomNavBarList = bottomNavBarViewModel.initialiseBottomNavBar()
+    val bottomNavBarList = taskViewModel.initialiseBottomNavBar()
     val navController = rememberNavController()
     Scaffold (
         containerColor = Color.Transparent,
@@ -135,15 +132,15 @@ fun BottomNavBar(
             ){
                 bottomNavBarList.forEachIndexed{index, item ->
                     NavigationBarItem(
-                        selected = index == bottomNavBarViewModel.selected,
+                        selected = index == taskViewModel.selected,
                         onClick = {
                             navController.navigate(item.screen)
-                            bottomNavBarViewModel.selected = index
+                            taskViewModel.selected = index
                         },
                         icon = {
                             Icon(
                                 imageVector =
-                                    if(index == bottomNavBarViewModel.selected){
+                                    if(index == taskViewModel.selected){
                                         item.selected
                                     }else{
                                         item.unselected
@@ -162,9 +159,8 @@ fun BottomNavBar(
             composable(route = "Stream"){
                 StreamScreen(
                     retrofitViewModel = retrofitViewModel,
-                    streamScreenViewModel = streamScreenViewModel,
+                    taskViewModel = taskViewModel,
                     navController = navController,
-                    playScreenViewModel = playScreenViewModel
                 )
             }
             composable(route = "Local"){
@@ -177,8 +173,8 @@ fun BottomNavBar(
             }
             composable(route = "Play"){
                 PlayScreen(
-                    playScreenViewModel = playScreenViewModel,
-                    navController = navController
+                    taskViewModel = taskViewModel,
+                    navController = navController,
                 )
             }
             composable(route = "Details"){
@@ -194,9 +190,8 @@ fun BottomNavBar(
 @Composable
 fun StreamScreen(
     retrofitViewModel: RetrofitViewModel,
-    streamScreenViewModel: StreamScreenViewModel,
+    taskViewModel: TaskViewModel,
     navController : NavController,
-    playScreenViewModel: PlayScreenViewModel
 ) {
     LaunchedEffect(retrofitViewModel.query) {
         if (retrofitViewModel.query.isNotEmpty()) {
@@ -253,9 +248,8 @@ fun StreamScreen(
                 items(trackData.data) { track ->
                     TrackCard(
                         track = track,
-                        streamScreenViewModel = streamScreenViewModel,
+                        taskViewModel = taskViewModel,
                         navController = navController,
-                        playScreenViewModel = playScreenViewModel
                     )
                 }
             }
@@ -335,9 +329,8 @@ fun TrackDetails(
 @Composable
 fun TrackCard(
     track: Data,
-    streamScreenViewModel: StreamScreenViewModel,
+    taskViewModel: TaskViewModel,
     navController: NavController,
-    playScreenViewModel: PlayScreenViewModel
 ){
     Card(
         modifier = Modifier
@@ -347,7 +340,7 @@ fun TrackCard(
             containerColor = Color.Transparent,
         ),
         onClick = {
-            playScreenViewModel.track = track
+            taskViewModel.track = track
             navController.navigate("Play")
         }
     ) {
@@ -373,7 +366,7 @@ fun TrackCard(
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = streamScreenViewModel.formatTime(track.duration),
+                    text = taskViewModel.formatTime(track.duration),
                     color = Color.White,
                     fontSize = 18.sp,
                     maxLines = 1,
@@ -428,8 +421,9 @@ fun TrackCard(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun PlayScreen(
-    playScreenViewModel: PlayScreenViewModel,
-    navController: NavController
+    taskViewModel: TaskViewModel,
+    navController: NavController,
+    mediaPlayerViewModel: MediaPlayerViewModel = MediaPlayerViewModel()
 ){
     Column(
         modifier = Modifier
@@ -485,7 +479,7 @@ fun PlayScreen(
             verticalAlignment = Alignment.CenterVertically
         ){
             GlideImage(
-                model = playScreenViewModel.track?.album?.cover_big,
+                model = taskViewModel.track?.album?.cover_big,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
@@ -498,7 +492,7 @@ fun PlayScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = playScreenViewModel.track?.title ?:"",
+                text = taskViewModel.track?.title ?:"",
                 fontSize = 30.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -506,7 +500,7 @@ fun PlayScreen(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = playScreenViewModel.track?.artist?.name ?:"",
+                text = taskViewModel.track?.artist?.name ?:"",
                 fontSize = 25.sp,
                 color = Color.White,
                 maxLines = 1,
@@ -523,12 +517,16 @@ fun PlayScreen(
         )
         IconButton(
             onClick = {
-                playScreenViewModel.playButton = !playScreenViewModel.playButton
+                mediaPlayerViewModel.isPlaying = !mediaPlayerViewModel.isPlaying
             },
             modifier = Modifier.size(100.dp)
         ) {
             Icon(
-                painter = if (playScreenViewModel.playButton) painterResource(id = R.drawable.playbutton) else painterResource(id = R.drawable.pausebutton),
+                painter =
+                    if(!mediaPlayerViewModel.isPlaying)
+                        painterResource(id = R.drawable.playbutton)
+                    else
+                        painterResource(id = R.drawable.pausebutton),
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier
