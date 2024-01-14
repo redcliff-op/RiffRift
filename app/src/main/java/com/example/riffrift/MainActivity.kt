@@ -185,7 +185,6 @@ fun BottomNavBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StreamScreen(
     retrofitViewModel: RetrofitViewModel,
@@ -193,7 +192,7 @@ fun StreamScreen(
     navController : NavController,
 ) {
     LaunchedEffect(retrofitViewModel.query) {
-        if (retrofitViewModel.query.isNotEmpty()) {
+        if (retrofitViewModel.query.isNotBlank()) {
             retrofitViewModel.fetchData(retrofitViewModel.query)
         }
     }
@@ -239,7 +238,7 @@ fun StreamScreen(
             )
         )
         Spacer(modifier = Modifier.size(10.dp))
-        if (trackData != null && trackData.data.isNotEmpty()) {
+        if (trackData != null && trackData.data!!.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier
                     .padding(bottom = 85.dp)
@@ -423,7 +422,7 @@ fun TrackCard(
             verticalAlignment = Alignment.CenterVertically
         ){
             GlideImage(
-                model = track.album.cover,
+                model = track.album?.cover,
                 contentDescription = null,
                 modifier = Modifier
                     .size(80.dp)
@@ -443,20 +442,22 @@ fun TrackCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = track.title,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 23.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                track.title?.let {
+                    Text(
+                        text = it,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 23.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 Row (
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ){
-                    if(track.explicit_lyrics){
+                    if(track.explicit_lyrics == true){
                         Box(
                             modifier = Modifier
                                 .background(
@@ -475,13 +476,15 @@ fun TrackCard(
                         }
                         Spacer(modifier = Modifier.size(10.dp))
                     }
-                    Text(
-                        text = track.artist.name,
-                        color = Color.White,
-                        fontSize = 22.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    track.artist?.name?.let {
+                        Text(
+                            text = it,
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
             }
@@ -550,7 +553,7 @@ fun PlayScreen(
             verticalAlignment = Alignment.CenterVertically
         ){
             GlideImage(
-                model = taskViewModel.track?.album?.cover_big,
+                model = taskViewModel.track?.album?.cover_xl,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()

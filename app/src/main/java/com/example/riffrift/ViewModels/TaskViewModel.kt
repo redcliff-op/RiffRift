@@ -32,9 +32,9 @@ class TaskViewModel : ViewModel() {
             BottomNavBarItem("Settings", Icons.Filled.Settings, Icons.Outlined.Settings,"Settings")
         )
     }
-    fun formatTime(totalSeconds: Int): String {
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
+    fun formatTime(totalSeconds: Int?): String {
+        val minutes = totalSeconds?.div(60)
+        val seconds = totalSeconds?.rem(60)
         return String.format("%02d:%02d", minutes, seconds)
     }
     fun loadPlayer() {
