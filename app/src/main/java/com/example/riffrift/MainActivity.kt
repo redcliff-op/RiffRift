@@ -41,6 +41,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -188,6 +189,7 @@ fun BottomNavBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StreamScreen(
     retrofitViewModel: RetrofitViewModel,
@@ -214,7 +216,12 @@ fun StreamScreen(
             onValueChange = { newQuery -> retrofitViewModel.query = newQuery },
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.fillMaxWidth(0.9f),
-            label = { Text(text = "Search")},
+            label = {
+                Text(
+                    text = "Search",
+                    fontWeight = FontWeight.Bold
+                )
+            },
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Search,
@@ -230,7 +237,11 @@ fun StreamScreen(
                     retrofitViewModel.query += " "
                 }
             ),
-            singleLine = true
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.White,
+                focusedBorderColor = Color.White
+            )
         )
         Spacer(modifier = Modifier.size(10.dp))
         if (trackData != null && trackData.data.isNotEmpty()) {
