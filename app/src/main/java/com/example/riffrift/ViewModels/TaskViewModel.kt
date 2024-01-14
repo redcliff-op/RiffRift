@@ -18,6 +18,8 @@ import com.example.riffrift.Retrofit.Data
 class TaskViewModel : ViewModel() {
     var selected by mutableIntStateOf(0)
     var track by mutableStateOf<Data?>(null)
+    var isPlaying by mutableStateOf(false)
+    var mediaPlayer by mutableStateOf(android.media.MediaPlayer())
     fun initialiseBottomNavBar(): List<BottomNavBarItem>{
         return listOf(
             BottomNavBarItem("Stream", Icons.Filled.Search, Icons.Outlined.Search,"Stream"),
@@ -29,5 +31,25 @@ class TaskViewModel : ViewModel() {
         val minutes = totalSeconds / 60
         val seconds = totalSeconds % 60
         return String.format("%02d:%02d", minutes, seconds)
+    }
+    fun loadPlayer() {
+        mediaPlayer.setDataSource(track?.preview ?: "")
+        mediaPlayer.prepareAsync()
+        mediaPlayer.setOnPreparedListener {
+            mediaPlayer.start()
+            isPlaying = true
+        }
+        mediaPlayer.setOnCompletionListener {
+            isPlaying = false
+        }
+    }
+
+    fun playPause() {
+        if (!isPlaying) {
+            mediaPlayer.start()
+        } else {
+            mediaPlayer.pause()
+        }
+        isPlaying = !isPlaying
     }
 }

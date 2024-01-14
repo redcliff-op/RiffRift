@@ -71,7 +71,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
-import com.example.riffrift.ViewModels.MediaPlayerViewModel
 import com.example.riffrift.ViewModels.SettingsViewModel
 import com.example.riffrift.ViewModels.TaskViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
@@ -342,6 +341,13 @@ fun TrackCard(
         onClick = {
             taskViewModel.track = track
             navController.navigate("Play")
+            if(!taskViewModel.isPlaying){
+                taskViewModel.loadPlayer()
+            }else{
+                taskViewModel.playPause()
+                taskViewModel.mediaPlayer.reset()
+                taskViewModel.loadPlayer()
+            }
         }
     ) {
         Row (
@@ -423,7 +429,6 @@ fun TrackCard(
 fun PlayScreen(
     taskViewModel: TaskViewModel,
     navController: NavController,
-    mediaPlayerViewModel: MediaPlayerViewModel = MediaPlayerViewModel()
 ){
     Column(
         modifier = Modifier
@@ -517,13 +522,13 @@ fun PlayScreen(
         )
         IconButton(
             onClick = {
-                mediaPlayerViewModel.isPlaying = !mediaPlayerViewModel.isPlaying
+                taskViewModel.playPause()
             },
             modifier = Modifier.size(100.dp)
         ) {
             Icon(
                 painter =
-                    if(!mediaPlayerViewModel.isPlaying)
+                    if(!taskViewModel.isPlaying)
                         painterResource(id = R.drawable.playbutton)
                     else
                         painterResource(id = R.drawable.pausebutton),
