@@ -20,6 +20,7 @@ class TaskViewModel : ViewModel() {
     var track by mutableStateOf<Data?>(null)
     var isPlaying by mutableStateOf(false)
     var mediaPlayer by mutableStateOf(android.media.MediaPlayer())
+    var onLoop by mutableStateOf(false)
     fun initialiseBottomNavBar(): List<BottomNavBarItem>{
         return listOf(
             BottomNavBarItem("Stream", Icons.Filled.Search, Icons.Outlined.Search,"Stream"),
@@ -37,6 +38,7 @@ class TaskViewModel : ViewModel() {
         mediaPlayer.prepareAsync()
         mediaPlayer.setOnPreparedListener {
             mediaPlayer.start()
+            mediaPlayer.isLooping = onLoop
             isPlaying = true
         }
         mediaPlayer.setOnCompletionListener {
@@ -47,8 +49,10 @@ class TaskViewModel : ViewModel() {
     fun playPause() {
         if (!isPlaying) {
             mediaPlayer.start()
+            mediaPlayer.isLooping = onLoop
         } else {
             mediaPlayer.pause()
+            mediaPlayer.isLooping = onLoop
         }
         isPlaying = !isPlaying
     }

@@ -56,7 +56,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -557,26 +556,59 @@ fun PlayScreen(
                     .clip(RoundedCornerShape(10.dp)),
             )
         }
-        Column(
-            modifier = Modifier.fillMaxWidth(0.9f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = taskViewModel.track?.title ?:"",
-                fontSize = 30.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = taskViewModel.track?.artist?.name ?:"",
-                fontSize = 25.sp,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+        Row (
+            modifier = Modifier.fillMaxWidth(0.85f),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            Column(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = taskViewModel.track?.title_short ?:"",
+                    fontSize = 30.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = taskViewModel.track?.artist?.name ?:"",
+                    fontSize = 25.sp,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Column(
+                verticalArrangement = Arrangement.Center,
+            ) {
+                IconButton(
+                    onClick = {
+                        taskViewModel.onLoop = !taskViewModel.onLoop
+                        taskViewModel.mediaPlayer.isLooping = !taskViewModel.mediaPlayer.isLooping
+                    },
+                    modifier = Modifier.size(45.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.loopicon),
+                        contentDescription = null,
+                        tint =
+                            if(taskViewModel.onLoop)
+                                Color.Cyan
+                            else
+                                Color.White,
+                        modifier = Modifier.fillMaxSize(),
+
+                    )
+                }
+                Text(
+                    text = "Loop",
+                    color = Color.White,
+                    fontSize = 20.sp
+                )
+            }
         }
         LinearProgressIndicator(
             progress = 0.5f,
