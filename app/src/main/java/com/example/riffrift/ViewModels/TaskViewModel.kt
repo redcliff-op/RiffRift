@@ -1,5 +1,7 @@
 package com.example.riffrift.ViewModels
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -21,7 +23,11 @@ class TaskViewModel : ViewModel() {
     var isPlaying by mutableStateOf(false)
     var mediaPlayer by mutableStateOf(android.media.MediaPlayer())
     var onLoop by mutableStateOf(false)
-    fun initialiseBottomNavBar(): List<BottomNavBarItem>{
+    var progress by mutableStateOf(0f)
+    var duration by mutableStateOf(0)
+    var currentPosition by mutableStateOf(0)
+
+    fun initialiseBottomNavBar(): List<BottomNavBarItem> {
         return listOf(
             BottomNavBarItem("Stream", Icons.Filled.Search, Icons.Outlined.Search,"Stream"),
             BottomNavBarItem("Local", Icons.Filled.List, Icons.Outlined.List,"Local"),
@@ -40,9 +46,13 @@ class TaskViewModel : ViewModel() {
             mediaPlayer.start()
             mediaPlayer.isLooping = onLoop
             isPlaying = true
+            duration = mediaPlayer.duration
+            handler.post(updateProgressRunnable)
         }
         mediaPlayer.setOnCompletionListener {
             isPlaying = false
+            progress = 0f
+            handler.post(updateProgressRunnable)
         }
     }
 
@@ -55,5 +65,17 @@ class TaskViewModel : ViewModel() {
             mediaPlayer.isLooping = onLoop
         }
         isPlaying = !isPlaying
+    }
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val updateProgressRunnable = object : Runnable {
+        override fun run() {
+            currentPosition = mediaPlayer.currentPosition
+            progress = currentPosition.toFloat() / duration.toFloat()
+            handler.postDelayed(this, 100)
+        }
+        fun seekTo(position: Int) {
+            mediaPlayer.seekTo(position)
+        }
     }
 }

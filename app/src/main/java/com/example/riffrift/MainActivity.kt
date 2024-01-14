@@ -612,7 +612,7 @@ fun PlayScreen(
             }
         }
         LinearProgressIndicator(
-            progress = 0.5f,
+            progress = taskViewModel.progress,
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .height(8.dp)
