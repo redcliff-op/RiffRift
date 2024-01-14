@@ -524,7 +524,8 @@ fun PlayScreen(
             }
             Text(
                 text = "Now Playing",
-                fontSize = 30.sp,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
             IconButton(
@@ -567,7 +568,7 @@ fun PlayScreen(
             ) {
                 Text(
                     text = taskViewModel.track?.title_short ?:"",
-                    fontSize = 30.sp,
+                    fontSize = 25.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
@@ -575,7 +576,7 @@ fun PlayScreen(
                 )
                 Text(
                     text = taskViewModel.track?.artist?.name ?:"",
-                    fontSize = 25.sp,
+                    fontSize = 20.sp,
                     color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -589,7 +590,7 @@ fun PlayScreen(
                         taskViewModel.onLoop = !taskViewModel.onLoop
                         taskViewModel.mediaPlayer.isLooping = !taskViewModel.mediaPlayer.isLooping
                     },
-                    modifier = Modifier.size(45.dp)
+                    modifier = Modifier.size(35.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.loopicon),
@@ -606,7 +607,7 @@ fun PlayScreen(
                 Text(
                     text = "Loop",
                     color = Color.White,
-                    fontSize = 20.sp
+                    fontSize = 15.sp
                 )
             }
         }
@@ -633,7 +634,7 @@ fun PlayScreen(
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier
-                    .size(70.dp)
+                    .size(50.dp)
             )
         }
     }
