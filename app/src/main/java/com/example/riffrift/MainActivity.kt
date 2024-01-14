@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -477,7 +478,9 @@ fun PlayScreen(
             }
         }
         Row (
-            modifier = Modifier.fillMaxWidth(0.9f),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(1f),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ){
@@ -485,7 +488,7 @@ fun PlayScreen(
                 model = playScreenViewModel.track?.album?.cover_big,
                 contentDescription = null,
                 modifier = Modifier
-                    .size(370.dp)
+                    .fillMaxSize()
                     .clip(RoundedCornerShape(10.dp)),
             )
         }
