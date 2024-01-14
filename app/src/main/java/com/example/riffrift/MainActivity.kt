@@ -131,15 +131,15 @@ fun BottomNavBar(
             ){
                 bottomNavBarList.forEachIndexed{index, item ->
                     NavigationBarItem(
-                        selected = index == taskViewModel.selected,
+                        selected = index == settingsViewModel.selected,
                         onClick = {
                             navController.navigate(item.screen)
-                            taskViewModel.selected = index
+                            settingsViewModel.selected = index
                         },
                         icon = {
                             Icon(
                                 imageVector =
-                                    if(index == taskViewModel.selected){
+                                    if(index == settingsViewModel.selected){
                                         item.selected
                                     }else{
                                         item.unselected

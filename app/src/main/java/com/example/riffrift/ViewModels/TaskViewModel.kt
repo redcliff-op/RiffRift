@@ -10,7 +10,6 @@ import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -18,7 +17,6 @@ import com.example.riffrift.BottomNavBar.BottomNavBarItem
 import com.example.riffrift.Retrofit.Data
 
 class TaskViewModel : ViewModel() {
-    var selected by mutableIntStateOf(0)
     var track by mutableStateOf<Data?>(null)
     var isPlaying by mutableStateOf(false)
     var mediaPlayer by mutableStateOf(android.media.MediaPlayer())
