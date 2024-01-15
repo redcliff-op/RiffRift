@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -342,14 +343,31 @@ fun StreamScreen(
                 }
             }
         } else {
-            Text(
-                text = "Search a Track, Artist or an Album",
-                fontSize = 40.sp,
-                color = Color.White,
-                lineHeight = 50.sp,
-                modifier = Modifier.padding(30.dp),
-                textAlign = TextAlign.Center
-            )
+            Row (
+                modifier = Modifier.fillMaxSize(0.8f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ){
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(0.8f),
+                    elevation =  CardDefaults.elevatedCardElevation(100.dp)
+                ) {
+                    Row (
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        Text(
+                            text = "Search a Track, Artist or an Album",
+                            fontSize = 30.sp,
+                            color = Color.White,
+                            lineHeight = 50.sp,
+                            modifier = Modifier.padding(30.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
         }
     }
 }
