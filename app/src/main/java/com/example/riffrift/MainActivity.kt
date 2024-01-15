@@ -434,7 +434,7 @@ fun TrackDetails(
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(bottom = 85.dp),
+            .padding(bottom = 185.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
