@@ -1,7 +1,12 @@
 package com.example.riffrift.ViewModels
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.media.audiofx.AudioEffect
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -99,6 +104,16 @@ class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
             mediaPlayer.reset()
             track = retrofitViewModel.trackData.value?.data?.get(--currentTrackIndex)
             loadPlayer()
+        }
+    }
+
+    @SuppressLint("QueryPermissionsNeeded")
+    fun launchEQ(context: Context){
+        val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            Toast.makeText(context,"No Default Equalizer app on the Device",Toast.LENGTH_SHORT).show()
         }
     }
 }

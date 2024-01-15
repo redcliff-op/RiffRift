@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import com.example.riffrift.Retrofit.Data
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -65,6 +67,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -386,6 +389,7 @@ fun Local(
 fun Settings(
     taskViewModel: TaskViewModel
 ){
+    val ctx = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -395,7 +399,7 @@ fun Settings(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row (
-            modifier = Modifier.fillMaxWidth(0.85f),
+            modifier = Modifier.fillMaxWidth(0.9f),
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
@@ -407,8 +411,10 @@ fun Settings(
         }
         Spacer(modifier = Modifier.size(10.dp))
         Row (
-            modifier = Modifier.fillMaxWidth(0.9f),
-            horizontalArrangement = Arrangement.SpaceAround,
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(6f),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ){
             Text(
@@ -421,6 +427,22 @@ fun Settings(
                 onCheckedChange = {
                     taskViewModel.pitchBlackTheme = !taskViewModel.pitchBlackTheme
                 }
+            )
+        }
+        Row (
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(6f)
+                .clickable {
+                    taskViewModel.launchEQ(ctx)
+                },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            Text(
+                text = "Equalizer",
+                fontSize = 25.sp,
+                color = Color.White,
             )
         }
     }
