@@ -10,6 +10,7 @@ import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -24,6 +25,8 @@ class TaskViewModel : ViewModel() {
     var progress by mutableStateOf(0f)
     var duration by mutableStateOf(0)
     var currentPosition by mutableStateOf(0)
+    var pitchBlackTheme by mutableStateOf(false)
+    var selected by mutableIntStateOf(0)
 
     fun initialiseBottomNavBar(): List<BottomNavBarItem> {
         return listOf(

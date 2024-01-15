@@ -71,7 +71,6 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
-import com.example.riffrift.ViewModels.SettingsViewModel
 import com.example.riffrift.ViewModels.TaskViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
 
@@ -85,13 +84,13 @@ class MainActivity : ComponentActivity() {
         )
         val repository = Repository(RetrofitInstance)
         val retrofitViewModel = RetrofitViewModel(repository)
-        val settingsViewModel = SettingsViewModel()
+        val taskViewModel = TaskViewModel()
         setContent {
             RiffRiftTheme {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                 ){
-                    if(!settingsViewModel.pitchBlackTheme){
+                    if(!taskViewModel.pitchBlackTheme){
                         Image(
                             painter = painterResource(id = R.drawable.bgfinal),
                             contentDescription = null,
@@ -106,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     }
                     BottomNavBar(
                         retrofitViewModel = retrofitViewModel,
-                        settingsViewModel = settingsViewModel
+                        taskViewModel = taskViewModel
                     )
                 }
             }
@@ -118,8 +117,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BottomNavBar(
     retrofitViewModel: RetrofitViewModel,
-    settingsViewModel: SettingsViewModel,
-    taskViewModel: TaskViewModel = TaskViewModel(),
+    taskViewModel: TaskViewModel
 ){
     val bottomNavBarList = taskViewModel.initialiseBottomNavBar()
     val navController = rememberNavController()
@@ -131,15 +129,15 @@ fun BottomNavBar(
             ){
                 bottomNavBarList.forEachIndexed{index, item ->
                     NavigationBarItem(
-                        selected = index == settingsViewModel.selected,
+                        selected = index == taskViewModel.selected,
                         onClick = {
                             navController.navigate(item.screen)
-                            settingsViewModel.selected = index
+                            taskViewModel.selected = index
                         },
                         icon = {
                             Icon(
                                 imageVector =
-                                    if(index == settingsViewModel.selected){
+                                    if(index == taskViewModel.selected){
                                         item.selected
                                     }else{
                                         item.unselected
@@ -167,7 +165,7 @@ fun BottomNavBar(
             }
             composable(route = "Settings"){
                 Settings(
-                    settingsViewModel = settingsViewModel,
+                    taskViewModel = taskViewModel,
                 )
             }
             composable(route = "Play"){
@@ -274,7 +272,7 @@ fun Local(
 
 @Composable
 fun Settings(
-    settingsViewModel: SettingsViewModel
+    taskViewModel: TaskViewModel
 ){
     Column(
         modifier = Modifier
@@ -307,9 +305,9 @@ fun Settings(
                 color = Color.White
             )
             Switch(
-                checked = settingsViewModel.pitchBlackTheme,
+                checked = taskViewModel.pitchBlackTheme,
                 onCheckedChange = {
-                    settingsViewModel.pitchBlackTheme = !settingsViewModel.pitchBlackTheme
+                    taskViewModel.pitchBlackTheme = !taskViewModel.pitchBlackTheme
                 }
             )
         }
@@ -406,6 +404,7 @@ fun TrackCard(
             taskViewModel.track = track
             navController.navigate("Play")
             if(!taskViewModel.isPlaying){
+                taskViewModel.mediaPlayer.reset()
                 taskViewModel.loadPlayer()
             }else{
                 taskViewModel.playPause()
