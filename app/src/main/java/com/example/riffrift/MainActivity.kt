@@ -6,6 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import com.example.riffrift.Retrofit.Data
@@ -36,6 +41,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -47,7 +53,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -113,6 +121,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun BottomNavBar(
@@ -148,6 +157,89 @@ fun BottomNavBar(
                         },
                         label = { Text(text = item.label)}
                     )
+                }
+            }
+        },
+        floatingActionButton = {
+            AnimatedVisibility(
+                visible = taskViewModel.track != null && !taskViewModel.isOnPlayScreen,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically()
+            ){
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate("play")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .aspectRatio(4f),
+                    containerColor = Color(0xFF695885),
+                ) {
+                    Row (
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ){
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ){
+                            GlideImage(
+                                model = taskViewModel.track!!.album?.cover_medium,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                            )
+                            Spacer(modifier = Modifier.size(10.dp))
+                            Column(
+                                verticalArrangement = Arrangement.SpaceEvenly,
+                            ) {
+                                taskViewModel.track!!.title_short?.let {
+                                    Text(
+                                        text = it,
+                                        fontSize = 20.sp,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                taskViewModel.track!!.artist?.name?.let {
+                                    Text(
+                                        text = it,
+                                        fontSize = 15.sp,
+                                        color = Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            IconButton(
+                                onClick = {
+                                    taskViewModel.playPause()
+                                },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    painter =
+                                    if(!taskViewModel.isPlaying)
+                                        painterResource(id = R.drawable.playbutton)
+                                    else
+                                        painterResource(id = R.drawable.pausebutton),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -401,15 +493,18 @@ fun TrackCard(
             containerColor = Color.Transparent,
         ),
         onClick = {
-            taskViewModel.track = track
-            navController.navigate("Play")
-            if(!taskViewModel.isPlaying){
-                taskViewModel.mediaPlayer.reset()
-                taskViewModel.loadPlayer()
+            if(taskViewModel.track==track){
+                navController.navigate("Play")
             }else{
-                taskViewModel.playPause()
-                taskViewModel.mediaPlayer.reset()
-                taskViewModel.loadPlayer()
+                taskViewModel.track = track
+                if(!taskViewModel.isPlaying){
+                    taskViewModel.mediaPlayer.reset()
+                    taskViewModel.loadPlayer()
+                }else{
+                    taskViewModel.playPause()
+                    taskViewModel.mediaPlayer.reset()
+                    taskViewModel.loadPlayer()
+                }
             }
         }
     ) {
@@ -497,6 +592,12 @@ fun PlayScreen(
     taskViewModel: TaskViewModel,
     navController: NavController,
 ){
+    DisposableEffect(Unit){
+        taskViewModel.isOnPlayScreen = true
+        onDispose {
+            taskViewModel.isOnPlayScreen = false
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()

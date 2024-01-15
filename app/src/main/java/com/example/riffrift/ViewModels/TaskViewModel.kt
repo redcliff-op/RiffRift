@@ -27,6 +27,7 @@ class TaskViewModel : ViewModel() {
     var currentPosition by mutableStateOf(0)
     var pitchBlackTheme by mutableStateOf(false)
     var selected by mutableIntStateOf(0)
+    var isOnPlayScreen by mutableStateOf(false)
 
     fun initialiseBottomNavBar(): List<BottomNavBarItem> {
         return listOf(
