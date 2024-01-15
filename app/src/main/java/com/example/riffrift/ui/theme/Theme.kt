@@ -64,7 +64,7 @@ fun RiffRiftTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = darkColorScheme(),
         typography = Typography,
         content = content
     )
