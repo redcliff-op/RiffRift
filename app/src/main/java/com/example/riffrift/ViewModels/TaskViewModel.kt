@@ -16,8 +16,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.riffrift.BottomNavBar.BottomNavBarItem
 import com.example.riffrift.Retrofit.Data
+import com.example.riffrift.ViewModel.RetrofitViewModel
 
-class TaskViewModel : ViewModel() {
+class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
     var track by mutableStateOf<Data?>(null)
     var isPlaying by mutableStateOf(false)
     var mediaPlayer by mutableStateOf(android.media.MediaPlayer())
@@ -28,6 +29,7 @@ class TaskViewModel : ViewModel() {
     var pitchBlackTheme by mutableStateOf(false)
     var selected by mutableIntStateOf(0)
     var isOnPlayScreen by mutableStateOf(false)
+    var currentTrackIndex by mutableStateOf(0)
 
     fun initialiseBottomNavBar(): List<BottomNavBarItem> {
         return listOf(
@@ -55,6 +57,9 @@ class TaskViewModel : ViewModel() {
             isPlaying = false
             progress = 0f
             handler.post(updateProgressRunnable)
+            if(!onLoop){
+                nextTrack()
+            }
         }
     }
 
@@ -78,6 +83,22 @@ class TaskViewModel : ViewModel() {
         }
         fun seekTo(position: Int) {
             mediaPlayer.seekTo(position)
+        }
+    }
+
+    fun nextTrack(){
+        if(!((currentTrackIndex == (retrofitViewModel.trackData.value?.data?.size ?: 1)-1))){
+            mediaPlayer.reset()
+            track = retrofitViewModel.trackData.value?.data?.get(++currentTrackIndex)
+            loadPlayer()
+        }
+    }
+
+    fun previousTrack(){
+        if(!(currentTrackIndex==0)){
+            mediaPlayer.reset()
+            track = retrofitViewModel.trackData.value?.data?.get(--currentTrackIndex)
+            loadPlayer()
         }
     }
 }

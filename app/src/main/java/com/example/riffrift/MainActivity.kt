@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -93,7 +94,7 @@ class MainActivity : ComponentActivity() {
         )
         val repository = Repository(RetrofitInstance)
         val retrofitViewModel = RetrofitViewModel(repository)
-        val taskViewModel = TaskViewModel()
+        val taskViewModel = TaskViewModel(retrofitViewModel)
         setContent {
             RiffRiftTheme {
                 Box(
@@ -334,8 +335,9 @@ fun StreamScreen(
                 modifier = Modifier
                     .padding(bottom = 85.dp)
             ){
-                items(trackData.data) { track ->
+                itemsIndexed(trackData.data) { index, track ->
                     TrackCard(
+                        index = index,
                         track = track,
                         taskViewModel = taskViewModel,
                         navController = navController,
@@ -499,6 +501,7 @@ fun TrackDetails(
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun TrackCard(
+    index: Int,
     track: Data,
     taskViewModel: TaskViewModel,
     navController: NavController,
@@ -511,6 +514,7 @@ fun TrackCard(
             containerColor = Color.Transparent,
         ),
         onClick = {
+            taskViewModel.currentTrackIndex = index
             if(taskViewModel.track==track){
                 navController.navigate("Play")
             }else{
@@ -740,23 +744,58 @@ fun PlayScreen(
                 .clip(CircleShape),
             color = Color.White
         )
-        IconButton(
-            onClick = {
-                taskViewModel.playPause()
-            },
-            modifier = Modifier.size(100.dp)
-        ) {
-            Icon(
-                painter =
+        Row (
+            modifier = Modifier.fillMaxWidth(0.9f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            IconButton(
+                onClick = {
+                    taskViewModel.previousTrack()
+                },
+                modifier = Modifier.size(100.dp)
+            ){
+                Icon(
+                    painter =
+                    painterResource(id = R.drawable.previous),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(50.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    taskViewModel.playPause()
+                },
+                modifier = Modifier.size(100.dp)
+            ){
+                Icon(
+                    painter =
                     if(!taskViewModel.isPlaying)
                         painterResource(id = R.drawable.playbutton)
                     else
                         painterResource(id = R.drawable.pausebutton),
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(50.dp)
-            )
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(50.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    taskViewModel.nextTrack()
+                },
+                modifier = Modifier.size(100.dp)
+            ){
+                Icon(
+                    painter = painterResource(id = R.drawable.next),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(50.dp)
+                )
+            }
         }
     }
 }
