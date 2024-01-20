@@ -2,10 +2,14 @@ package com.example.riffrift
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -30,7 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,9 +43,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -57,10 +60,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,19 +78,37 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.riffrift.Auth.GoogleAuthUiClient
+import com.example.riffrift.Auth.SignInState
+import com.example.riffrift.Auth.UserData
 import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
+import com.example.riffrift.ViewModels.SignInViewModel
 import com.example.riffrift.ViewModels.TaskViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
+import com.google.android.gms.auth.api.identity.Identity
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
+
+    @OptIn(ExperimentalGlideComposeApi::class)
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -116,165 +137,221 @@ class MainActivity : ComponentActivity() {
                             color = Color.Black
                         ){}
                     }
-                    BottomNavBar(
-                        retrofitViewModel = retrofitViewModel,
-                        taskViewModel = taskViewModel
-                    )
-                }
-            }
-        }
-    }
-}
+                    val bottomNavBarList = taskViewModel.initialiseBottomNavBar()
+                    val navController = rememberNavController()
 
-@OptIn(ExperimentalGlideComposeApi::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Composable
-fun BottomNavBar(
-    retrofitViewModel: RetrofitViewModel,
-    taskViewModel: TaskViewModel
-){
-    val bottomNavBarList = taskViewModel.initialiseBottomNavBar()
-    val navController = rememberNavController()
-    Scaffold (
-        containerColor = Color.Transparent,
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color.Transparent
-            ){
-                bottomNavBarList.forEachIndexed{index, item ->
-                    NavigationBarItem(
-                        selected = index == taskViewModel.selected,
-                        onClick = {
-                            navController.navigate(item.screen)
-                            taskViewModel.selected = index
-                        },
-                        icon = {
-                            Icon(
-                                imageVector =
-                                    if(index == taskViewModel.selected){
-                                        item.selected
-                                    }else{
-                                        item.unselected
-                                    },
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                        },
-                        label = { Text(text = item.label)}
-                    )
-                }
-            }
-        },
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = taskViewModel.track != null && !taskViewModel.isOnPlayScreen,
-                enter = fadeIn() + slideInVertically(),
-                exit = fadeOut() + slideOutVertically()
-            ){
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate("play")
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .aspectRatio(4f),
-                    containerColor = Color(0xFF695885),
-                ) {
-                    Row (
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ){
-                        Row (
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ){
-                            GlideImage(
-                                model = taskViewModel.track!!.album?.cover_medium,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                            )
-                            Spacer(modifier = Modifier.size(10.dp))
-                            Column(
-                                verticalArrangement = Arrangement.SpaceEvenly,
-                            ) {
-                                taskViewModel.track!!.title_short?.let {
-                                    Text(
-                                        text = it,
-                                        fontSize = 20.sp,
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                taskViewModel.track!!.artist?.name?.let {
-                                    Text(
-                                        text = it,
-                                        fontSize = 15.sp,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                    Scaffold (
+                        containerColor = Color.Transparent,
+                        bottomBar = {
+                            NavigationBar(
+                                containerColor = Color.Transparent
+                            ){
+                                bottomNavBarList.forEachIndexed{index, item ->
+                                    NavigationBarItem(
+                                        selected = index == taskViewModel.selected,
+                                        onClick = {
+                                            navController.navigate(item.screen)
+                                            taskViewModel.selected = index
+                                        },
+                                        icon = {
+                                            Icon(
+                                                imageVector =
+                                                if(index == taskViewModel.selected){
+                                                    item.selected
+                                                }else{
+                                                    item.unselected
+                                                },
+                                                contentDescription = null,
+                                                tint = Color.White
+                                            )
+                                        },
+                                        label = { Text(text = item.label)}
                                     )
                                 }
                             }
-                        }
-                        Row (
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            IconButton(
-                                onClick = {
-                                    taskViewModel.playPause()
-                                },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    painter =
-                                    if(!taskViewModel.isPlaying)
-                                        painterResource(id = R.drawable.playbutton)
-                                    else
-                                        painterResource(id = R.drawable.pausebutton),
-                                    contentDescription = null,
-                                    tint = Color.White,
+                        },
+                        floatingActionButton = {
+                            AnimatedVisibility(
+                                visible = taskViewModel.track != null && !taskViewModel.isOnPlayScreen,
+                                enter = fadeIn() + slideInVertically(),
+                                exit = fadeOut() + slideOutVertically()
+                            ){
+                                FloatingActionButton(
+                                    onClick = {
+                                        navController.navigate("play")
+                                    },
                                     modifier = Modifier
-                                        .size(30.dp)
+                                        .fillMaxWidth(0.9f)
+                                        .aspectRatio(4f),
+                                    containerColor = Color(0xFF695885),
+                                ) {
+                                    Row (
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ){
+                                        Row (
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
+                                        ){
+                                            GlideImage(
+                                                model = taskViewModel.track!!.album?.cover_medium,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(10.dp))
+                                            )
+                                            Spacer(modifier = Modifier.size(10.dp))
+                                            Column(
+                                                verticalArrangement = Arrangement.SpaceEvenly,
+                                            ) {
+                                                taskViewModel.track!!.title_short?.let {
+                                                    Text(
+                                                        text = it,
+                                                        fontSize = 20.sp,
+                                                        color = Color.White,
+                                                        fontWeight = FontWeight.Bold,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                                taskViewModel.track!!.artist?.name?.let {
+                                                    Text(
+                                                        text = it,
+                                                        fontSize = 15.sp,
+                                                        color = Color.White,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Row (
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ){
+                                            IconButton(
+                                                onClick = {
+                                                    taskViewModel.playPause()
+                                                },
+                                                modifier = Modifier.size(40.dp)
+                                            ) {
+                                                Icon(
+                                                    painter =
+                                                    if(!taskViewModel.isPlaying)
+                                                        painterResource(id = R.drawable.playbutton)
+                                                    else
+                                                        painterResource(id = R.drawable.pausebutton),
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier
+                                                        .size(30.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ){
+                        NavHost(navController = navController, startDestination = "sign_in"){
+                            composable(route = "Stream"){
+                                StreamScreen(
+                                    retrofitViewModel = retrofitViewModel,
+                                    taskViewModel = taskViewModel,
+                                    navController = navController,
+                                )
+                            }
+                            composable(route = "Local"){
+                                Local()
+                            }
+                            composable(route = "Settings"){
+                                Settings(
+                                    taskViewModel = taskViewModel,
+                                    userData = googleAuthUiClient.getSignedInUser(),
+                                    navController = navController
+                                )
+                            }
+                            composable(route = "Play"){
+                                PlayScreen(
+                                    taskViewModel = taskViewModel,
+                                    navController = navController,
+                                )
+                            }
+                            composable(route = "Details"){
+                                TrackDetails(
+                                    taskViewModel = taskViewModel
+                                )
+                            }
+                            composable(route = "sign_in") {
+                                val viewModel = viewModel<SignInViewModel>()
+                                val state by viewModel.state.collectAsStateWithLifecycle()
+
+                                LaunchedEffect(key1 = googleAuthUiClient.getSignedInUser()) {
+                                    if(googleAuthUiClient.getSignedInUser() != null) {
+                                        navController.navigate("Stream")
+                                    }
+                                }
+
+                                val launcher = rememberLauncherForActivityResult(
+                                    contract = ActivityResultContracts.StartIntentSenderForResult(),
+                                    onResult = { result ->
+                                        if(result.resultCode == RESULT_OK) {
+                                            lifecycleScope.launch {
+                                                val signInResult = googleAuthUiClient.signInWithIntent(
+                                                    intent = result.data ?: return@launch
+                                                )
+                                                viewModel.onSignInResult(signInResult)
+                                            }
+                                        }
+                                    }
+                                )
+
+                                LaunchedEffect(key1 = state.isSignInSuccessful) {
+                                    if(state.isSignInSuccessful) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Sign in successful",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                        navController.navigate("Stream")
+                                        viewModel.resetState()
+                                    }
+                                }
+
+                                SignInScreen(
+                                    state = state,
+                                    onSignInClick = {
+                                        lifecycleScope.launch {
+                                            val signInIntentSender = googleAuthUiClient.signIn()
+                                            launcher.launch(
+                                                IntentSenderRequest.Builder(
+                                                    signInIntentSender ?: return@launch
+                                                ).build()
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                            composable(route = "AccDetails"){
+                                AccountDetails(
+                                    userData = googleAuthUiClient.getSignedInUser(),
+                                    onSignOut = {
+                                        lifecycleScope.launch {
+                                            googleAuthUiClient.signOut()
+                                            Toast.makeText(
+                                                applicationContext,
+                                                "Signed out",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            navController.navigate("sign_in")
+                                        }
+                                    }
                                 )
                             }
                         }
                     }
                 }
-            }
-        }
-    ){
-        NavHost(navController = navController, startDestination = "Stream"){
-            composable(route = "Stream"){
-                StreamScreen(
-                    retrofitViewModel = retrofitViewModel,
-                    taskViewModel = taskViewModel,
-                    navController = navController,
-                )
-            }
-            composable(route = "Local"){
-                Local()
-            }
-            composable(route = "Settings"){
-                Settings(
-                    taskViewModel = taskViewModel,
-                )
-            }
-            composable(route = "Play"){
-                PlayScreen(
-                    taskViewModel = taskViewModel,
-                    navController = navController,
-                )
-            }
-            composable(route = "Details"){
-                TrackDetails(
-                    taskViewModel = taskViewModel
-                )
             }
         }
     }
@@ -385,9 +462,12 @@ fun Local(
 
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun Settings(
-    taskViewModel: TaskViewModel
+    taskViewModel: TaskViewModel,
+    userData: UserData?,
+    navController: NavController
 ){
     val ctx = LocalContext.current
     Column(
@@ -410,6 +490,27 @@ fun Settings(
             )
         }
         Spacer(modifier = Modifier.size(10.dp))
+        Row (
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .aspectRatio(6f)
+                .clickable {
+                    navController.navigate("AccDetails")
+                },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ){
+            Text(
+                text = "Account",
+                fontSize = 25.sp,
+                color = Color.White,
+            )
+            GlideImage(
+                model = userData?.profilePictureUrl,
+                contentDescription = null,
+                modifier = Modifier.clip(shape = CircleShape)
+            )
+        }
         Row (
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -818,6 +919,97 @@ fun PlayScreen(
                         .size(50.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SignInScreen(
+    state: SignInState,
+    onSignInClick: () -> Unit
+) {
+    val context = LocalContext.current
+    LaunchedEffect(key1 = state.signInError) {
+        state.signInError?.let { error ->
+            Toast.makeText(
+                context,
+                error,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(0.8f),
+            elevation =  CardDefaults.elevatedCardElevation(1000.dp)
+        ) {
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "Sign in to View Your Favorite Songs",
+                    fontSize = 30.sp,
+                    color = Color.White,
+                    lineHeight = 50.sp,
+                    modifier = Modifier.padding(30.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        Spacer(modifier = Modifier.size(20.dp))
+        Button(onClick = onSignInClick) {
+            Text(text = "Sign in")
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AccountDetails(
+    userData: UserData?,
+    onSignOut: () -> Unit
+){
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Signed in as",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp
+        )
+        Spacer(modifier = Modifier.size(100.dp))
+        GlideImage(
+            model = userData?.profilePictureUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(150.dp)
+                .clip(shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.size(20.dp))
+        Text(
+            text = userData?.username?:"",
+            color = Color.White,
+            fontSize = 25.sp
+        )
+        Spacer(modifier = Modifier.size(100.dp))
+        Button(
+            onClick = onSignOut
+        ){
+            Text(
+                text = "Sign Out",
+                color = Color.Black,
+                fontSize = 20.sp
+            )
         }
     }
 }
