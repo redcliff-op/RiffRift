@@ -1050,8 +1050,22 @@ fun SignInScreen(
             }
         }
         Spacer(modifier = Modifier.size(20.dp))
-        Button(onClick = onSignInClick) {
-            Text(text = "Sign in")
+        Button(
+            onClick = onSignInClick,
+            modifier = Modifier.fillMaxWidth(0.8f),
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.google) ,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.065f),
+                tint = Color.Unspecified
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Text(
+                text = "Sign in with Google",
+                fontSize = 20.sp,
+                color = Color.Black,
+            )
         }
     }
 }
