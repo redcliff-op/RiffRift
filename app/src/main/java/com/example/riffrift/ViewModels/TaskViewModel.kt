@@ -35,11 +35,12 @@ class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
     var selected by mutableIntStateOf(0)
     var isOnPlayScreen by mutableStateOf(false)
     var currentTrackIndex by mutableStateOf(0)
+    var isSignedIn by mutableStateOf(false)
 
     fun initialiseBottomNavBar(): List<BottomNavBarItem> {
         return listOf(
-            BottomNavBarItem("Stream", Icons.Filled.Search, Icons.Outlined.Search,"Stream"),
-            BottomNavBarItem("Local", Icons.Filled.List, Icons.Outlined.List,"Local"),
+            BottomNavBarItem("Search", Icons.Filled.Search, Icons.Outlined.Search,"Stream"),
+            BottomNavBarItem("Liked", Icons.Filled.List, Icons.Outlined.List,"Liked"),
             BottomNavBarItem("Settings", Icons.Filled.Settings, Icons.Outlined.Settings,"Settings")
         )
     }
@@ -62,9 +63,6 @@ class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
             isPlaying = false
             progress = 0f
             handler.post(updateProgressRunnable)
-            if(!onLoop){
-                nextTrack()
-            }
         }
     }
 
@@ -92,9 +90,9 @@ class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
     }
 
     fun nextTrack(){
-        if(!((currentTrackIndex == (retrofitViewModel.trackData.value?.data?.size ?: 1)-1))){
+        if(!((currentTrackIndex == (retrofitViewModel.trackData.value?.size ?: 1)-1))){
             mediaPlayer.reset()
-            track = retrofitViewModel.trackData.value?.data?.get(++currentTrackIndex)
+            track = retrofitViewModel.trackData.value?.get(++currentTrackIndex)
             loadPlayer()
         }
     }
@@ -102,7 +100,7 @@ class TaskViewModel (val retrofitViewModel: RetrofitViewModel) : ViewModel() {
     fun previousTrack(){
         if(!(currentTrackIndex==0)){
             mediaPlayer.reset()
-            track = retrofitViewModel.trackData.value?.data?.get(--currentTrackIndex)
+            track = retrofitViewModel.trackData.value?.get(--currentTrackIndex)
             loadPlayer()
         }
     }

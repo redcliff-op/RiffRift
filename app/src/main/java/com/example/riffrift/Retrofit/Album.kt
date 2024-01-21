@@ -1,8 +1,8 @@
 package com.example.riffrift.Retrofit
 
 data class Album(
-    val cover: String?,
-    val cover_medium: String?,
-    val cover_xl: String?,
-    val title: String?,
+    val cover: String? = "",
+    val cover_medium: String? = "",
+    val cover_xl: String? = "",
+    val title: String? = "",
 )

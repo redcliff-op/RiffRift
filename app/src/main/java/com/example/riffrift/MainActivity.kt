@@ -40,6 +40,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -93,11 +95,13 @@ import com.example.riffrift.Auth.UserData
 import com.example.riffrift.Repository.Repository
 import com.example.riffrift.Retrofit.RetrofitInstance
 import com.example.riffrift.ViewModel.RetrofitViewModel
+import com.example.riffrift.ViewModels.FirebaseViewModel
 import com.example.riffrift.ViewModels.SignInViewModel
 import com.example.riffrift.ViewModels.TaskViewModel
 import com.example.riffrift.ui.theme.RiffRiftTheme
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
     private val googleAuthUiClient by lazy {
@@ -119,6 +123,7 @@ class MainActivity : ComponentActivity() {
         val repository = Repository(RetrofitInstance)
         val retrofitViewModel = RetrofitViewModel(repository)
         val taskViewModel = TaskViewModel(retrofitViewModel)
+        var firebaseViewModel = FirebaseViewModel(googleAuthUiClient)
         setContent {
             RiffRiftTheme {
                 Box(
@@ -146,27 +151,29 @@ class MainActivity : ComponentActivity() {
                             NavigationBar(
                                 containerColor = Color.Transparent
                             ){
-                                bottomNavBarList.forEachIndexed{index, item ->
-                                    NavigationBarItem(
-                                        selected = index == taskViewModel.selected,
-                                        onClick = {
-                                            navController.navigate(item.screen)
-                                            taskViewModel.selected = index
-                                        },
-                                        icon = {
-                                            Icon(
-                                                imageVector =
-                                                if(index == taskViewModel.selected){
-                                                    item.selected
-                                                }else{
-                                                    item.unselected
-                                                },
-                                                contentDescription = null,
-                                                tint = Color.White
-                                            )
-                                        },
-                                        label = { Text(text = item.label)}
-                                    )
+                                if(taskViewModel.isSignedIn){
+                                    bottomNavBarList.forEachIndexed{index, item ->
+                                        NavigationBarItem(
+                                            selected = index == taskViewModel.selected,
+                                            onClick = {
+                                                navController.navigate(item.screen)
+                                                taskViewModel.selected = index
+                                            },
+                                            icon = {
+                                                Icon(
+                                                    imageVector =
+                                                    if(index == taskViewModel.selected){
+                                                        item.selected
+                                                    }else{
+                                                        item.unselected
+                                                    },
+                                                    contentDescription = null,
+                                                    tint = Color.White
+                                                )
+                                            },
+                                            label = { Text(text = item.label)}
+                                        )
+                                    }
                                 }
                             }
                         },
@@ -179,6 +186,7 @@ class MainActivity : ComponentActivity() {
                                 FloatingActionButton(
                                     onClick = {
                                         navController.navigate("play")
+                                        firebaseViewModel.updateLikedStatus()
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth(0.9f)
@@ -260,10 +268,16 @@ class MainActivity : ComponentActivity() {
                                     retrofitViewModel = retrofitViewModel,
                                     taskViewModel = taskViewModel,
                                     navController = navController,
+                                    firebaseViewModel = firebaseViewModel
                                 )
                             }
-                            composable(route = "Local"){
-                                Local()
+                            composable(route = "Liked"){
+                                Liked(
+                                    firebaseViewModel = firebaseViewModel,
+                                    taskViewModel = taskViewModel,
+                                    navController = navController,
+                                    retrofitViewModel = retrofitViewModel
+                                )
                             }
                             composable(route = "Settings"){
                                 Settings(
@@ -276,6 +290,7 @@ class MainActivity : ComponentActivity() {
                                 PlayScreen(
                                     taskViewModel = taskViewModel,
                                     navController = navController,
+                                    firebaseViewModel = firebaseViewModel
                                 )
                             }
                             composable(route = "Details"){
@@ -289,6 +304,8 @@ class MainActivity : ComponentActivity() {
 
                                 LaunchedEffect(key1 = googleAuthUiClient.getSignedInUser()) {
                                     if(googleAuthUiClient.getSignedInUser() != null) {
+                                        taskViewModel.isSignedIn = true
+                                        firebaseViewModel = FirebaseViewModel(googleAuthUiClient)
                                         navController.navigate("Stream")
                                     }
                                 }
@@ -314,6 +331,7 @@ class MainActivity : ComponentActivity() {
                                             "Sign in successful",
                                             Toast.LENGTH_LONG
                                         ).show()
+                                        taskViewModel.isSignedIn = true
                                         navController.navigate("Stream")
                                         viewModel.resetState()
                                     }
@@ -344,6 +362,7 @@ class MainActivity : ComponentActivity() {
                                                 "Signed out",
                                                 Toast.LENGTH_LONG
                                             ).show()
+                                            taskViewModel.isSignedIn = false
                                             navController.navigate("sign_in")
                                         }
                                     }
@@ -362,6 +381,7 @@ fun StreamScreen(
     retrofitViewModel: RetrofitViewModel,
     taskViewModel: TaskViewModel,
     navController : NavController,
+    firebaseViewModel: FirebaseViewModel
 ) {
     LaunchedEffect(retrofitViewModel.query) {
         if (retrofitViewModel.query.isNotBlank()) {
@@ -376,7 +396,7 @@ fun StreamScreen(
             .navigationBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.size(15.dp))
+        Spacer(modifier = Modifier.size(10.dp))
         OutlinedTextField(
             value = retrofitViewModel.query,
             onValueChange = { newQuery -> retrofitViewModel.query = newQuery },
@@ -384,8 +404,9 @@ fun StreamScreen(
             modifier = Modifier.fillMaxWidth(0.9f),
             label = {
                 Text(
-                    text = "Search",
-                    fontWeight = FontWeight.Bold
+                    text = "What do you want to listen to?",
+                    fontSize = 18.sp,
+                    color = Color.White
                 )
             },
             trailingIcon = {
@@ -410,17 +431,18 @@ fun StreamScreen(
             )
         )
         Spacer(modifier = Modifier.size(10.dp))
-        if (trackData != null && trackData.data!!.isNotEmpty()) {
+        if (!trackData.isNullOrEmpty()) {
             LazyColumn(
                 modifier = Modifier
                     .padding(bottom = 85.dp)
             ){
-                itemsIndexed(trackData.data) { index, track ->
+                itemsIndexed(trackData) { index, track ->
                     TrackCard(
                         index = index,
                         track = track,
                         taskViewModel = taskViewModel,
                         navController = navController,
+                        firebaseViewModel = firebaseViewModel
                     )
                 }
             }
@@ -456,10 +478,53 @@ fun StreamScreen(
 
 
 @Composable
-fun Local(
-
+fun Liked(
+    firebaseViewModel: FirebaseViewModel,
+    taskViewModel: TaskViewModel,
+    navController: NavController,
+    retrofitViewModel: RetrofitViewModel
 ){
-
+    retrofitViewModel._trackData.value = firebaseViewModel.data.value
+    LaunchedEffect(Unit){
+        firebaseViewModel.fetchTrackDataFromFirebase()
+    }
+    val trackDataList = firebaseViewModel.data.value
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(bottom = 85.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        if(trackDataList!=null){
+            Spacer(modifier = Modifier.size(10.dp))
+            Row (
+                modifier = Modifier.fillMaxWidth(0.87f),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = "Liked Songs" ,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.size(10.dp))
+            LazyColumn{
+                itemsIndexed(trackDataList){index, track ->
+                    TrackCard(
+                        index = index,
+                        track = track,
+                        taskViewModel = taskViewModel,
+                        navController = navController,
+                        firebaseViewModel = firebaseViewModel
+                    )
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -628,6 +693,7 @@ fun TrackCard(
     track: Data,
     taskViewModel: TaskViewModel,
     navController: NavController,
+    firebaseViewModel: FirebaseViewModel
 ){
     Card(
         modifier = Modifier
@@ -637,6 +703,8 @@ fun TrackCard(
             containerColor = Color.Transparent,
         ),
         onClick = {
+            firebaseViewModel.curTrack = track
+            firebaseViewModel.updateLikedStatus()
             taskViewModel.currentTrackIndex = index
             if(taskViewModel.track==track){
                 navController.navigate("Play")
@@ -736,21 +804,27 @@ fun TrackCard(
 fun PlayScreen(
     taskViewModel: TaskViewModel,
     navController: NavController,
+    firebaseViewModel: FirebaseViewModel
 ){
     DisposableEffect(Unit){
         taskViewModel.isOnPlayScreen = true
+        firebaseViewModel.fetchTrackDataFromFirebase()
         onDispose {
             taskViewModel.isOnPlayScreen = false
         }
     }
+    LaunchedEffect(Unit){
+        firebaseViewModel.updateLikedStatus()
+    }
+    LaunchedEffect(firebaseViewModel.isLikedUI){}
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(bottom = 85.dp),
+            .padding(bottom = 95.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Row (
             modifier = Modifier.fillMaxWidth(0.9f),
@@ -830,34 +904,6 @@ fun PlayScreen(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Column(
-                verticalArrangement = Arrangement.Center,
-            ) {
-                IconButton(
-                    onClick = {
-                        taskViewModel.onLoop = !taskViewModel.onLoop
-                        taskViewModel.mediaPlayer.isLooping = !taskViewModel.mediaPlayer.isLooping
-                    },
-                    modifier = Modifier.size(35.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.loopicon),
-                        contentDescription = null,
-                        tint =
-                            if(taskViewModel.onLoop)
-                                Color.Cyan
-                            else
-                                Color.White,
-                        modifier = Modifier.fillMaxSize(),
-
-                    )
-                }
-                Text(
-                    text = "Loop",
-                    color = Color.White,
-                    fontSize = 15.sp
-                )
-            }
         }
         LinearProgressIndicator(
             progress = taskViewModel.progress,
@@ -868,15 +914,33 @@ fun PlayScreen(
             color = Color.White
         )
         Row (
-            modifier = Modifier.fillMaxWidth(0.9f),
+            modifier = Modifier.fillMaxWidth(0.85f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ){
             IconButton(
                 onClick = {
+                    taskViewModel.onLoop = !taskViewModel.onLoop
+                    taskViewModel.mediaPlayer.isLooping = !taskViewModel.mediaPlayer.isLooping
+                },
+                modifier = Modifier.size(30.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.loopicon),
+                    contentDescription = null,
+                    tint =
+                    if(taskViewModel.onLoop)
+                        Color.Cyan
+                    else
+                        Color.White,
+                    modifier = Modifier.fillMaxSize(),
+                    )
+            }
+            IconButton(
+                onClick = {
                     taskViewModel.previousTrack()
                 },
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier.size(40.dp)
             ){
                 Icon(
                     painter =
@@ -884,14 +948,14 @@ fun PlayScreen(
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(40.dp)
                 )
             }
             IconButton(
                 onClick = {
                     taskViewModel.playPause()
                 },
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier.size(50.dp)
             ){
                 Icon(
                     painter =
@@ -902,21 +966,43 @@ fun PlayScreen(
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(40.dp)
                 )
             }
             IconButton(
                 onClick = {
                     taskViewModel.nextTrack()
                 },
-                modifier = Modifier.size(100.dp)
+                modifier = Modifier.size(40.dp)
             ){
                 Icon(
                     painter = painterResource(id = R.drawable.next),
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(40.dp)
+                )
+            }
+            IconButton(
+                onClick = {
+                    firebaseViewModel.updateLikedTrack()
+                },
+                modifier = Modifier.size(30.dp)
+            ) {
+                Icon(
+                    imageVector =
+                        if(firebaseViewModel.isLikedUI){
+                            Icons.Filled.Favorite
+                        }else{
+                             Icons.Filled.FavoriteBorder
+                        },
+                    contentDescription = null,
+                    tint =
+                    if(firebaseViewModel.isLikedUI)
+                        Color.Cyan
+                    else
+                        Color.White,
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
@@ -977,7 +1063,10 @@ fun AccountDetails(
     onSignOut: () -> Unit
 ){
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .padding(bottom = 50.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -1001,7 +1090,7 @@ fun AccountDetails(
             color = Color.White,
             fontSize = 25.sp
         )
-        Spacer(modifier = Modifier.size(100.dp))
+        Spacer(modifier = Modifier.size(20.dp))
         Button(
             onClick = onSignOut
         ){
