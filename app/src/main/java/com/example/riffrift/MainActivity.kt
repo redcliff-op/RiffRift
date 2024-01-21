@@ -833,7 +833,7 @@ fun PlayScreen(
         ){
             IconButton(
                 onClick = {
-                    navController.navigate("Stream")
+                    navController.navigateUp()
                 },
                 modifier = Modifier.size(40.dp)
             ){
